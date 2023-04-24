@@ -30,6 +30,24 @@ mobilenet_v2 = "https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector
 inception_v3 = "https://tfhub.dev/google/tf2-preview/inception_v3/feature_vector/4"
 
 
+def gpu_init():
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    # tf.debugging.enable_traceback_filtering()
+    # tf.debugging.set_log_device_placement(True)
+    if gpus:
+        try:
+            # Currently, memory growth needs to be the same across GPUs
+            for gpu in gpus:
+                # tf.config.experimental.set_virtual_device_configuration(
+                #     gpu, [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1000)])
+                tf.config.experimental.set_memory_growth(gpu, True)
+            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+            print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+        except RuntimeError as e:
+            # Memory growth must be set before GPUs have been initialized
+            print(e)
+
+
 def main():
     feature_extractor_model = (
         inception_v3  # @param ["mobilenet_v2", "inception_v3"] choose wisely
@@ -40,7 +58,7 @@ def main():
     # https://www.kaggle.com/meowmeowmeowmeowmeow/gtsrb-german-traffic-sign/download
 
     # store it to a local folder which you need to define here, for now we only care about the Train data part:
-    data_root = "./data/Train/"
+    data_root = "./dataset/Train/"
 
     batch_size = 32
     img_height = 224
@@ -139,4 +157,5 @@ def main():
 
 
 if __name__ == "__main__":
+    gpu_init()
     main()
