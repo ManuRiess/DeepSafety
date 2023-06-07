@@ -30,6 +30,7 @@ mobilenet_v2 = "https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector
 inception_v3 = "https://tfhub.dev/google/tf2-preview/inception_v3/feature_vector/4"
 
 
+
 def gpu_init():
     gpus = tf.config.experimental.list_physical_devices('GPU')
     # tf.debugging.enable_traceback_filtering()
@@ -61,8 +62,10 @@ def main():
     data_root = "./dataset/Train/"
 
     batch_size = 32
-    img_height = 224
-    img_width = 224
+    img_height = 96
+    img_width = 96
+    # img_height = 224
+    # img_width = 224
 
     train_ds = tf.keras.utils.image_dataset_from_directory(
         data_root,
