@@ -4,6 +4,7 @@
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_ranking as tfr
 import pandas as pd
 import math
 import matplotlib.pyplot as plt
@@ -104,7 +105,7 @@ def main():
         return metric.result().numpy()
 
     def mAP(pred, gt):
-        metric = tf.keras.metrics.Accuracy()
+        metric = tfr.keras.metrics.MeanAveragePrecisionMetric()
         metric.update_state(pred, gt)
         return metric.result().numpy()
 
