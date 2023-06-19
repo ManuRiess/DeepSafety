@@ -10,7 +10,7 @@ tensorboard --logdir logs/fit
   - [ ] New pictures
   - [ ] Don't use Training dataset
   - [ ] Include Meta
-- [ ] Error map plot = "Confusion matrix"
+- [X] Error map plot = "Confusion matrix"
 - [ ] Improve model
   - [ ] Dropout layer
 - [ ] Documentation: Focus, what did I want to improve? 
