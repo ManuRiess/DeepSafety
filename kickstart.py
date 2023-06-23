@@ -18,6 +18,7 @@ import time
 import tensorflow as tf
 import tensorflow_hub as hub  # conda install -c conda-forge tensorflow-hub
 
+import matplotlib.pyplot as plt
 
 import datetime
 from tensorboard import program
@@ -53,9 +54,16 @@ def gpu_init():
 
 
 def main():
+    batch_size = 32
+    img_height = 96
+    img_width = 96
+    # img_height = 224
+    # img_width = 224
+
     feature_extractor_model = (
         inception_v3  # @param ["mobilenet_v2", "inception_v3"] choose wisely
     )
+
 
     # //////////////////////////////////////// Data data data
     # The data to train and validate the model can be downloaded here:
@@ -64,11 +72,6 @@ def main():
     # store it to a local folder which you need to define here, for now we only care about the Train data part:
     data_root = "./dataset/Train/"
 
-    batch_size = 32
-    img_height = 96
-    img_width = 96
-    # img_height = 224
-    # img_width = 224
 
     train_ds = tf.keras.utils.image_dataset_from_directory(
         data_root,
@@ -88,23 +91,54 @@ def main():
         batch_size=batch_size,
     )
 
+    aug = tf.keras.preprocessing.image.ImageDataGenerator(
+        rotation_range=15,
+        zoom_range=0.15,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        shear_range=0.15,
+        horizontal_flip=False,  # Not allowed as a flipped sign has a different meaning!
+        vertical_flip=False,  # Same here...
+        validation_split=0.2,
+        fill_mode="nearest")
+
+    train_ds_augmented = aug.flow_from_directory(
+        data_root,
+        subset="training",
+        seed=123,
+        save_to_dir='./dataset/TrainAug',
+        target_size=(img_height, img_width),
+        batch_size=batch_size,
+    )
+
+    val_ds_augmented = aug.flow_from_directory(
+        data_root,
+        subset="validation",
+        seed=123,
+        save_to_dir='./dataset/TrainAug',
+        target_size=(img_height, img_width),
+        batch_size=batch_size,
+    )
+
     # check whether all your classes have been loaded correctly @class_names ['0' '1' '10' '11' '12']
     class_names = np.array(train_ds.class_names)
     print(class_names)
 
+    # Normalization is done by IDG itself
     # Preprocessing as the tensorflow hub models expect images as float inputs [0,1]
-    normalization_layer = tf.keras.layers.Rescaling(1.0 / 255)
-    train_ds = train_ds.map(
-        lambda x, y: (normalization_layer(x), y)
-    )  # Where x—images, y—labels.
-    val_ds = val_ds.map(
-        lambda x, y: (normalization_layer(x), y)
-    )  # Where x—images, y—labels.
+    # normalization_layer = tf.keras.layers.Rescaling(1.0 / 255)
+    # train_ds_augmented = train_ds_augmented.map(
+    #     lambda x, y: (normalization_layer(x), y)
+    # )  # Where x—images, y—labels.
+    # val_ds_augmented = val_ds_augmented.map(
+    #     lambda x, y: (normalization_layer(x), y)
+    # )  # Where x—images, y—labels.
+
 
     # Then we set up prefetching will just smooth your data loader pipeline
-    AUTOTUNE = tf.data.AUTOTUNE
-    train_ds = train_ds.cache().prefetch(buffer_size=AUTOTUNE)
-    val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
+    # AUTOTUNE = tf.data.AUTOTUNE
+    # train_ds_augmented = train_ds_augmented.cache().prefetch(buffer_size=AUTOTUNE)
+    # # val_ds_augmented = val_ds_augmented.cache().prefetch(buffer_size=AUTOTUNE)
 
     # //////////////////////////////////////// Preparing the model or heating up the coffee machine
 
@@ -145,13 +179,25 @@ def main():
         log_dir=log_dir, histogram_freq=1
     )  # Enable histogram computation for every epoch.
 
-    NUM_EPOCHS = 100 # This is probably not enough
+    # Add checkpoint every 10 Epochs
+    checkpoint_filepath = 'train_checkpoint.h5'
+
+    checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        checkpoint_filepath,
+        monitor='val_loss',
+        save_weights_only=False,
+        save_best_only=False,
+        save_freq='epoch',
+        period=10  # Save the model every 10 epochs
+    )
+
+    NUM_EPOCHS = 200     # This is probably not enough
 
     history = model.fit(
-        train_ds,
-        validation_data=val_ds,
+        train_ds_augmented,
+        validation_data=val_ds_augmented,
         epochs=NUM_EPOCHS,
-        callbacks=tensorboard_callback,
+        callbacks=[tensorboard_callback, checkpoint_callback],
     )
 
     # Save your model for later use. Early enough you should think about a model versioning system
@@ -161,6 +207,21 @@ def main():
     export_path = "./tmp/saved_models/{}".format(int(t))
     model.save(export_path)
     print("Saved model to " + export_path)
+
+    # Plot history (else see tensorboard)
+    training_loss = history.history['loss']
+    training_accuracy = history.history['accuracy']
+
+    # Plot the training history
+    plt.figure(figsize=(8, 6))
+    plt.plot(training_loss, label='Training Loss')
+    plt.plot(training_accuracy, label='Training Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Metrics')
+    plt.title('Training History')
+    plt.legend()
+    plt.savefig('training_results' + str(int(t)) + '.jpg', dpi=300, bbox_inches='tight')
+    plt.show()
 
 
 if __name__ == "__main__":

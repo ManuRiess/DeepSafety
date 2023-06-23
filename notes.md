@@ -8,13 +8,12 @@ tensorboard --logdir logs/fit
 - [ ] Good validation batch
   - [ ] High variance
   - [ ] New pictures
-  - [ ] Don't use Training dataset
+  - [X] Don't use Training dataset
   - [ ] Include Meta
 - [X] Error map plot =| "Confusion matrix"
-- [ ] Improve model
-  - [ ] Dropout layer
+- [X] Improve model
 - [ ] Documentation: Focus, what did I want to improve? 
-- [ ] Data augumentation
+- [X] Data augumentation
 - [X] MAP metric
 
 ## Links
