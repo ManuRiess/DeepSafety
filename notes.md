@@ -12,6 +12,8 @@ tensorboard --logdir logs/fit
   - [ ] Include Meta
 - [X] Error map plot =| "Confusion matrix"
 - [X] Improve model
+  - [X] Pooling layer
+  - [X] Better feature extractor
 - [ ] Documentation: Focus, what did I want to improve? 
 - [X] Data augumentation
 - [X] MAP metric

@@ -17,6 +17,7 @@ import time
 
 import tensorflow as tf
 import tensorflow_hub as hub  # conda install -c conda-forge tensorflow-hub
+from tensorflow.keras.applications import EfficientNetB0
 
 import matplotlib.pyplot as plt
 
@@ -61,7 +62,8 @@ def main():
     # img_width = 224
 
     feature_extractor_model = (
-        inception_v3  # @param ["mobilenet_v2", "inception_v3"] choose wisely
+        # inception_v3  # @param ["mobilenet_v2", "inception_v3"] choose wisely
+        EfficientNetB0(include_top=False, weights='imagenet', input_shape=(img_height, img_width, 3))
     )
 
 
@@ -143,19 +145,22 @@ def main():
     # //////////////////////////////////////// Preparing the model or heating up the coffee machine
 
     # freeze the feature extractor
-    feature_extractor_layer = hub.KerasLayer(
-        feature_extractor_model, input_shape=(img_height, img_width, 3), trainable=False
-    )
+    # feature_extractor_layer = hub.KerasLayer(
+    #     feature_extractor_model , input_shape=(img_height, img_width, 3), trainable=False
+    # )
+    inputs = tf.keras.Input(shape=(img_height, img_width, 3))
+    feature_extractor_layer = feature_extractor_model(inputs, training=False)
 
     # attach the head fitting the current traffic sign classification task
     # the head is a pure fully connected output layer
     num_classes = len(class_names)
 
-    model = tf.keras.Sequential(
-        [feature_extractor_layer, tf.keras.layers.Dense(num_classes)]
-    )
+    x = tf.keras.layers.GlobalAveragePooling2D()(feature_extractor_layer)
+    outputs = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
 
-    model.summary() # (in case you care how the whole thing looks now)
+    model = tf.keras.Model(inputs, outputs)
+
+    model.summary()  # (in case you care how the whole thing looks now)
 
     # //////////////////////////////////////// Training or wild hand waving on caffeine
 
@@ -170,7 +175,7 @@ def main():
     # This is stuff you are free to play around with
     model.compile(
         optimizer=tf.keras.optimizers.Adam(),
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         metrics=["acc"],
     )
 
