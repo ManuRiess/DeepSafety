@@ -29,6 +29,9 @@ from tensorboard import program
 mobilenet_v2 = "https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4"
 inception_v3 = "https://tfhub.dev/google/tf2-preview/inception_v3/feature_vector/4"
 
+# Check GPU
+print(tf.test.is_built_with_cuda())
+
 
 
 def gpu_init():
@@ -118,7 +121,7 @@ def main():
         [feature_extractor_layer, tf.keras.layers.Dense(num_classes)]
     )
 
-    # model.summary() (in case you care how the whole thing looks now)
+    model.summary() # (in case you care how the whole thing looks now)
 
     # //////////////////////////////////////// Training or wild hand waving on caffeine
 
@@ -142,7 +145,7 @@ def main():
         log_dir=log_dir, histogram_freq=1
     )  # Enable histogram computation for every epoch.
 
-    NUM_EPOCHS = 50  # This is probably not enough
+    NUM_EPOCHS = 100 # This is probably not enough
 
     history = model.fit(
         train_ds,
@@ -157,6 +160,7 @@ def main():
 
     export_path = "./tmp/saved_models/{}".format(int(t))
     model.save(export_path)
+    print("Saved model to " + export_path)
 
 
 if __name__ == "__main__":
