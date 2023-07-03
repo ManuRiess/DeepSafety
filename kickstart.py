@@ -65,7 +65,7 @@ def main():
         # inception_v3  # @param ["mobilenet_v2", "inception_v3"] choose wisely
         EfficientNetB0(include_top=False, weights='imagenet', input_shape=(img_height, img_width, 3))
     )
-
+    feature_extractor_model.trainable = False
 
     # //////////////////////////////////////// Data data data
     # The data to train and validate the model can be downloaded here:
@@ -93,6 +93,9 @@ def main():
         batch_size=batch_size,
     )
 
+    #//////////////////////// Data-augmentation
+    # to get rotated, sheared, flipped images the ImageDataGenerator is used. with auf.flow_from_directory(), a sorted
+    # dataset can be imported and augmented in one step.
     aug = tf.keras.preprocessing.image.ImageDataGenerator(
         rotation_range=15,
         zoom_range=0.15,
@@ -136,7 +139,7 @@ def main():
     #     lambda x, y: (normalization_layer(x), y)
     # )  # Where x—images, y—labels.
 
-
+    # Cant prefetch DictIterator...
     # Then we set up prefetching will just smooth your data loader pipeline
     # AUTOTUNE = tf.data.AUTOTUNE
     # train_ds_augmented = train_ds_augmented.cache().prefetch(buffer_size=AUTOTUNE)
@@ -175,7 +178,7 @@ def main():
     # This is stuff you are free to play around with
     model.compile(
         optimizer=tf.keras.optimizers.Adam(),
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+        loss=tf.keras.losses.CategoricalCrossentropy(),
         metrics=["acc"],
     )
 
@@ -196,7 +199,7 @@ def main():
         period=10  # Save the model every 10 epochs
     )
 
-    NUM_EPOCHS = 200     # This is probably not enough
+    NUM_EPOCHS = 50     # This is probably not enough
 
     history = model.fit(
         train_ds_augmented,
@@ -217,7 +220,6 @@ def main():
     training_loss = history.history['loss']
     training_accuracy = history.history['accuracy']
 
-    # Plot the training history
     plt.figure(figsize=(8, 6))
     plt.plot(training_loss, label='Training Loss')
     plt.plot(training_accuracy, label='Training Accuracy')

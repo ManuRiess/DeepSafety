@@ -5,11 +5,11 @@ tensorboard --logdir logs/fit
 ```
 
 ## Todos
-- [ ] Good validation batch
-  - [ ] High variance
-  - [ ] New pictures
+- [X] Good validation batch
+  - [X] High variance
+  - [X] New pictures
   - [X] Don't use Training dataset
-  - [ ] Include Meta
+  - [X] Include Meta
 - [X] Error map plot =| "Confusion matrix"
 - [X] Improve model
   - [X] Pooling layer
